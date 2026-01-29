@@ -1,0 +1,108 @@
+Metadata-Version: 2.4
+Name: fcast
+Version: 0.1.0
+Summary: Forecast meta DB + lakehouse template (lottery time series).
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.1
+Requires-Dist: numpy>=1.26
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: pydantic>=2.6
+Requires-Dist: pydantic-settings>=2.2
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: pyarrow>=14.0
+Requires-Dist: rich>=13.7
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-html>=4.1; extra == "dev"
+Requires-Dist: nbmake>=1.5.5; extra == "dev"
+Requires-Dist: jupyterlab>=4.1; extra == "dev"
+Requires-Dist: ipykernel>=6.29; extra == "dev"
+Requires-Dist: ruff>=0.6.0; extra == "dev"
+Provides-Extra: nixtla
+Requires-Dist: neuralforecast>=1.7; extra == "nixtla"
+Requires-Dist: statsforecast>=1.7; extra == "nixtla"
+Requires-Dist: mlforecast>=0.12; extra == "nixtla"
+Requires-Dist: utilsforecast>=0.2; extra == "nixtla"
+Provides-Extra: spark
+Requires-Dist: pyspark>=3.5; extra == "spark"
+Provides-Extra: pg
+Requires-Dist: psycopg[binary]>=3.2; extra == "pg"
+Provides-Extra: delta
+Requires-Dist: delta-spark>=3.2; extra == "delta"
+
+# fcast
+
+時系列予測（宝くじ系の数字選択式データ）を対象に、**メタDB（forecast_meta）** と **Lakehouse（forecast_lake）** を分離しつつ、
+`run_plan`（実行計画）をDB駆動で回すための実装テンプレートです。
+
+- メタDB: SQLite（デフォルト） / PostgreSQL（任意）
+- Lake: Parquet（デフォルト） / Delta（任意で拡張）
+
+## 目的
+- ライブラリ（Nixtla系＋非Nixtla＋Foundation model）を追加しても壊れにくい
+- 引数・型・制約をDB化し、実行前検証（validator）でエラーを潰す
+- Notebookで段階的に動作確認し、pytestでHTMLレポートを出す
+
+---
+
+## クイックスタート（uv）
+> Windows PowerShell 例
+
+```powershell
+cd C:\fcast
+uv venv
+uv pip install -e .[dev]
+pytest -q --html=reports\pytest\report.html --self-contained-html
+```
+
+Notebook:
+```powershell
+jupyter lab
+```
+
+---
+
+## クイックスタート（conda）
+```powershell
+cd C:\fcast
+conda env create -f environment.yml
+conda activate fcast
+pytest -q --html=reports\pytest\report.html --self-contained-html
+jupyter lab
+```
+
+---
+
+## DB（デフォルト）
+- `forecast_meta` : `sqlite:///./forecast_meta.db`
+- `forecast_lake` : `./forecast_lake/`
+
+`.env` を作って上書きできます（`.env.example`参照）。
+
+---
+
+## Notebook（段階実行）
+- `notebooks/00_bootstrap.ipynb` : 環境確認・フォルダ作成
+- `notebooks/10_meta_init.ipynb` : メタDBテーブル作成＆確認
+- `notebooks/20_seed_registry.ipynb` : registryへサンプル登録（NeuralForecast等）
+- `notebooks/30_games_slots.ipynb` : 宝くじゲーム定義（増減に対応）
+- `notebooks/40_build_sample_data.ipynb` : サンプルデータ生成→silver/gold
+- `notebooks/50_plan_7models.ipynb` : LOTO6の7モデル（N1..N6+ALL）を計画化
+- `notebooks/60_run_mock_pipeline.ipynb` : Mockで疑似実行→結果をDB/Parquetで確認
+
+---
+
+## テスト（HTML出力）
+```powershell
+scripts\test.ps1
+```
+
+---
+
+## パッケージZIP作成（増殖管理）
+```powershell
+scripts\pack.ps1
+```
+
+`dist\fcast_latest.zip` を上書きし、古いZIPは `dist\archive\` に退避（世代数はスクリプト内で制限）。

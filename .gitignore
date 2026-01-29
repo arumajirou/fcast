@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+forecast_meta.db
+forecast_lake/
+reports/
+dist/
+.ipynb_checkpoints/
